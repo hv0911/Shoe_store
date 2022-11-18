@@ -7,12 +7,43 @@ exports.HomePage = (req, res) => {
 
 }
 
-exports.ShoesList = (req, res) => {
-    res.send("List of all the shoes: Not Implemented");
+exports.ShoesList = (req, res, next) => {
+
+    Shoe.find()
+        .sort({ price: 1 })
+        .populate("category")
+        .exec((err,shoes)=>{
+            if(err){
+                return next(err);
+            }
+
+            if(shoes==null){
+                const err = new Error("Shoes not found");
+                err.status = 404;
+                return next(err);
+            }
+
+            res.status(201).json(shoes);
+        });
+
+
 }
 
-exports.ShoeDetail = (req, res) => {
-    res.send("Detail of a Shoe:NOt Implemented");
+exports.ShoeDetail = (req, res ,next) => {
+    Shoe.findById(req.params.id)
+        .populate("category")
+        .exec((err,shoe)=>{
+            if(err){
+                return next(err);
+            }
+            if(shoe===null){
+                const err = new Error("Shoe not found");
+                err.status = 404;
+                return next(err);
+            }
+            
+            res.status(201).json(shoe);
+        })
 }
 
 
@@ -23,26 +54,26 @@ exports.CreateShoeGet = (req, res) => {
 
 exports.CreateShoePost = [
 
-    body("name","name must not be empty")
+    body("name", "name must not be empty")
         .isLength({ min: 1 })
         .escape()
     ,
-    body("description","Description must not be empty")
+    body("description", "Description must not be empty")
         .isLength({ min: 1 })
         .escape()
     ,
-    body("number_in_stock","Stock Number must not be empty")
+    body("number_in_stock", "Stock Number must not be empty")
         .trim()
         .isInt()
-        .isLength({min:5})
+        .isLength({ min: 5 })
         .escape()
     ,
-    body("price","Price must not be empty")
+    body("price", "Price must not be empty")
         .trim()
         .isInt()
         .escape()
     ,
-   
+
     body("status").escape(),
     body("size").escape(),
 
@@ -50,13 +81,13 @@ exports.CreateShoePost = [
 
         const errors = validationResult(req);
 
-        if(!errors.isEmpty()){
-            return res.status(400).json({errors:errors.array()});
-        }else{
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        } else {
             const { name, description, category, number_in_stock, price, size, status } = req.body;
 
             const shoe = new Shoe({
-    
+
                 name: name,
                 description: description,
                 category: category,
@@ -64,16 +95,16 @@ exports.CreateShoePost = [
                 price: price,
                 size: size,
                 status: status,
-    
+
             });
             shoe.save()
 
             res.status(201).json(shoe);
         }
 
-        }
+    }
 
-        
+
 
 ]
 

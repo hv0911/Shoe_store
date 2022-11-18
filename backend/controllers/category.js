@@ -1,14 +1,60 @@
 
 const Category = require('../models/category');
+const Shoe  = require("../models/shoes");
 const { body, validationResult } = require("express-validator");
+const async = require("async");
 
 exports.categoryList = (req, res) => {
 
-    res.send("List Of Category:Not Implemented");
+    Category.find()
+            .exec((err,categories)=>{
+
+                if(err){
+                    return next(err);
+                }
+                if(categories===null){
+                    const err = new Error("Categories Not Found");
+                    err.status = 404;
+                    return next(err);
+                }
+                res.status(201).json(categories);
+
+            })
+  
 }
 
-exports.categoryDetail = (req, res) => {
-    res.send("Detail of a Category:Not Implemented");
+
+exports.categoryDetail = (req, res ,next) => {
+    
+    async.parallel(
+
+        {
+            category(callback){
+                Category.findById(req.params.id).exec(callback);
+            },
+            shoes(callback){
+                Shoe.find({category:req.params.id}).exec(callback)
+            },
+        }
+       , 
+        (err,results)=>{
+           
+            if(err){
+                return next(err);
+            }
+            if(results.category===null){
+                const err = new Error("category not found");
+                err.status = 404;
+                return next(404);
+            }
+            
+            res.status(201).json({
+                category:results.category,
+                shoes:results.shoes
+            }) 
+        }
+    )
+
 }
 
 
