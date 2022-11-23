@@ -3,6 +3,9 @@ const Category = require('../models/category');
 const Shoe  = require("../models/shoes");
 const { body, validationResult } = require("express-validator");
 const async = require("async");
+const { ShoesList } = require('./shoes');
+const category = require('../models/category');
+const { findByIdAndDelete } = require('../models/shoes');
 
 exports.categoryList = (req, res) => {
 
@@ -95,10 +98,96 @@ exports.createCategoryGet = (req, res) => {
     res.send("Category Created!: Not implemented");
 }
 
-exports.updateCategory = (req, res) => {
-    res.send("Updated! : Not implemented");
-}
+
+
+exports.updateCategory = [
+    body("name", "Name must not be empty")
+        .trim()
+        .isLength({ min: 2 })
+        .escape()
+    ,
+    body("description", "Name must not be empty")
+        .isLength({ min: 5 })
+        .escape()
+    ,
+
+    (req , res ,next )=>{
+
+        
+        const errors = validationResult(req);
+        
+        const {name , description } = req.body;
+
+        const category = new Category({
+            name:name,
+            description:description,
+            _id:req.params.id     // this is required otherwise new id will assign
+
+        });
+
+        if(!errors.isEmpty()){
+        
+            res.status(404).json({
+                errors:errors.array()
+            })
+        
+            return ;
+        }
+
+        Category.findByIdAndUpdate(req.params.id , category , {} , (err , previous)=>{
+            if(err){
+                return next(err);
+            }
+            res.status(201).json({
+                prevCategory:previous,
+                updatedCategory:category,
+                message:"Category Updated",
+            });
+        })
+
+        
+    }
+    
+]
+
 
 exports.deleteCategory = (req, res) => {
-    res.send("Category Deleted!: Not implemented");
+ 
+    async.parallel(
+     {
+        category(callback){
+            Category.findById(req.params.id).exec(callback);
+        },
+        shoes(callback){
+            Shoe.find({category:req.params.id}).exec(callback);
+        },
+
+     },
+     (err,results)=>{
+
+        if(err){
+            next(err);
+        }
+
+        if(results.shoes.length > 0 ){
+            res.json({
+                message:"Delete the shoes first ",
+                shoes:results.shoes
+            })
+        }else{
+
+            Category.findByIdAndDelete(req.params.id , (err)=>{
+                if(err){
+                    return next(err);
+                }
+                res.status(201).json({
+                    message:"Category Deleted"
+                })
+            })
+
+        }
+
+     }
+    )
+
 }

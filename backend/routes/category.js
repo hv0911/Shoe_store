@@ -12,7 +12,7 @@ router.get('/category/create',Category.createCategoryGet);
 
 router.post('/category/create',Category.createCategoryPost);
 
-router.put('/category/:id/update',Category.updateCategory)
+router.put('/category/:id/update',Category.updateCategory);
 
 router.delete('/category/:id/delete',Category.deleteCategory);
 
