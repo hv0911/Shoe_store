@@ -3,9 +3,7 @@ const Category = require('../models/category');
 const Shoe  = require("../models/shoes");
 const { body, validationResult } = require("express-validator");
 const async = require("async");
-const { ShoesList } = require('./shoes');
-const category = require('../models/category');
-const { findByIdAndDelete } = require('../models/shoes');
+
 
 exports.categoryList = (req, res) => {
 
